@@ -3,6 +3,7 @@ package ru.xkr1se;
 import lombok.Cleanup;
 import lombok.val;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,20 +17,23 @@ import java.util.jar.JarOutputStream;
  */
 public class Mutator {
     public static void main(String[] args) throws IOException {
-        if(args.length < 2) {
+/*        if(args.length < 2) {
             System.out.println("[!] Wrong usage!");
             return;
-        }
+        }*/
 
-        val fileSource = new File(args[0]);
+        val fileSource = new File("in.jar");
 
         if(!fileSource.exists()) {
             System.out.println("[!] File path " + fileSource.getAbsolutePath() + " not found.");
             return;
         }
 
+        val begin = System.currentTimeMillis();
+
         @Cleanup val jarSource = new JarFile(fileSource);
-        @Cleanup val jarTarget = new JarOutputStream(Files.newOutputStream(Paths.get(args[1])));
+        @Cleanup val jarTarget = new JarOutputStream(Files.newOutputStream(Paths.get("out.jar")));
+        @Cleanup val bufferedJarTargetOutput = new BufferedOutputStream(jarTarget);
 
         val entries = jarSource.entries();
 
@@ -46,10 +50,14 @@ public class Mutator {
 
             int r;
             while ((r = entryIn.read()) != -1) {
-                jarTarget.write(r);
+                bufferedJarTargetOutput.write(r);
             }
+
+            bufferedJarTargetOutput.flush();
 
             jarTarget.closeEntry();
         }
+
+        System.out.print("\n\nTime " + (System.currentTimeMillis() - begin) + " ms.");
     }
 }
